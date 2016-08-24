@@ -1,3 +1,14 @@
+/*
+ * TO-DO LIST
+ * ~~~~~~~~~~
+ * 
+ * -- Check Atmega32/ousb schematic and double check pin choices. (Note: some hacking of the ousb board will be required to get all the analog inputs needed
+ * -- If we're going to do any testing using an actual arduino, specify correct pins for the arduino model being used (comment out Atmega32/ousb specific pins)
+ * -- Make sure the logic makes sense, and is what the hardware boys need
+ * -- Double check the PID constructor to make sure it's correctly set up (look in the .cpp file that came in the library)
+ * -- Go through the code and identify any immediates that can be replaced by variables (will make life easier as we start testing with hardware specific values)
+ * 
+ */
 #include <PID_v1.h>
 
 // holds the current rotation of the motor (one unit = one 'click' on shock)
