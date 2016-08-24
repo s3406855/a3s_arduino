@@ -44,8 +44,6 @@ PID a3s(&PID_IN, &PID_OUT, &REF, K_P, K_I, K_D, DIRECT);
 
 void setup(void)
 {
-  // put your setup code here, to run once:
-
   // set direction pin as output (pin number specified in globals)
   pinMode(direction_pin, OUTPUT);
   
