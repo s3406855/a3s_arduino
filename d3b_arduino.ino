@@ -15,20 +15,20 @@
 volatile int8_t position_count = 0;
 
 // define a couple of pins for ease of reference - these may not be the best choice - pulled them out of a hat
-volatile int8_t direction_pin = 1; // PB0
-volatile int8_t step_pin = 2; // PB1
+volatile int8_t direction_pin = 12; // On ousb use PB0, pin 1
+volatile int8_t step_pin = 13; // On ousb use PB1, pin 2
 
 // Accelerometer input pins
-volatile int8_t accel_top = 40; // PA0
-volatile int8_t accel_bot = 39; // PA1
+volatile int8_t accel_top = A0; // On ousb use PA0, pin 40
+volatile int8_t accel_bot = A1; // On ousb use PA1, pin 39
 
 // Gain set pins
-volatile int8_t k_p_pin = 38; // PA2
-volatile int8_t k_i_pin = 37; // PA3
-volatile int8_t k_d_pin = 36; // PA4
+volatile int8_t k_p_pin = A2; // On ousb use PA2, pin 38
+volatile int8_t k_i_pin = A3; // On ousb use PA3, pin 37
+volatile int8_t k_d_pin = A4; // On ousb use PA4, pin 36
 
 // Reference point set pin
-volatile int8_t ref_pin = 35; // PA5
+volatile int8_t ref_pin = A5; // On ousb use PA5, pin 35
 
 // Doubles required for PID library. K values and REF read in during setup() from trimpots
 volatile double K_P, K_I, K_D, REF, PID_IN, PID_OUT;
