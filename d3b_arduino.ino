@@ -11,6 +11,10 @@
  */
 #include <PID_v1.h>
 
+#define TEST1 // if this line is uncommented, the controller will bypass the PID loop and oscillate slowly from max left to max right
+
+#define MAX_CLICKS 48 // number of clicks in either direction to get 720 degrees
+
 // holds the current rotation of the motor (one unit = one 'click' on shock)
 volatile int8_t position_count = 0;
 
@@ -19,7 +23,7 @@ volatile int8_t direction_pin = 12; // On ousb use PB0, pin 1
 volatile int8_t step_pin = 13; // On ousb use PB1, pin 2
 
 // Accelerometer input pins
-volatile int8_t accel_top = A0; // On ousb use PA0, pin 40
+//volatile int8_t accel_top = A0; // On ousb use PA0, pin 40 - TOP ACCELEROMETER NOT NEEDED - VALUE HARD CODED
 volatile int8_t accel_bot = A1; // On ousb use PA1, pin 39
 
 // Gain set pins
@@ -48,7 +52,7 @@ volatile int16_t min_delay = 1; // ms? micros or nanos would be better
 volatile int16_t max_delay = 100;
 
 // Delay time to control the PWM signal
-volatile int16_t delay_ms;
+volatile int16_t delay_us;
 
 // Creat a PID object
 PID a3s(&PID_IN, &PID_OUT, &REF, K_P, K_I, K_D, DIRECT);
@@ -76,17 +80,26 @@ void setup(void)
 
 void loop(void)
 {
+  #ifdef TEST1
+  // write oscillate code here
+  while (1)
+  {
+    
+    //
+  }
+  #endif
+  
   // Read accelerometers
-  PID_IN = analogRead(accel_top) - analogRead(accel_bot);
+  PID_IN = analogRead(accel_bot);
   
   // Do a PID calculation
   a3s.Compute();
   
-  delay_ms = get_delay(&PID_OUT);
+  delay_us = get_delay(&PID_OUT);
   
   if (PID_OUT > threshold) // pid commands a positive adjustment
   {
-    if (position_count < 48) // 48 clicks in each direction assuming 15 deg per click
+    if (position_count < MAX_CLICKS) // still below clockwise max?
     {
       // set direction bit to HIGH
       digitalWrite(direction_pin, HIGH);
@@ -95,9 +108,9 @@ void loop(void)
       for (unsigned short i = 0; i < steps_per_click; i++)
       {
         digitalWrite(step_pin, HIGH);
-        delay(delay_ms);
+        delayMicroseconds(delay_us);
         digitalWrite(step_pin, LOW);
-        delay(delay_ms);
+        delayMicroseconds(delay_us);
       }
       /*
        * Every time this loop finishes, a 'click' will have been achieved on the shock. If more than one click is required, the final delay() in the above
@@ -110,7 +123,7 @@ void loop(void)
   }
   else if (PID_OUT < (-1 * threshold)) // pid commands a negative adjustment
   {
-    if (position_count > -48)
+    if (position_count > -MAX_CLICKS) // still above ccw max?
     {
       // set direction bit LOW
       digitalWrite(direction_pin, LOW);
@@ -118,9 +131,9 @@ void loop(void)
       for (unsigned short i = 0; i < steps_per_click; i++)
       {
         digitalWrite(step_pin, HIGH);
-        delay(delay_ms);
+        delay(delay_us);
         digitalWrite(step_pin, LOW);
-        delay(delay_ms);
+        delay(delay_us);
       }
       position_count--;
     }
@@ -147,5 +160,85 @@ int16_t get_delay(double *pid)
   float frac = (float)temp / (float)65536;
   
   return ( (frac * max_delay) + min_delay );
+}
+
+void goToMax(void)
+{
+  // 720 degrees clockwise
+  do
+  {
+    // do a positive click
+    // set direction bit to HIGH
+    digitalWrite(direction_pin, HIGH);
+
+    // now loop as many times as required to make one full 'click' on the shock
+    for (unsigned short i = 0; i < steps_per_click; i++)
+    {
+      digitalWrite(step_pin, HIGH);
+      delayMicroseconds(delay_us);
+      digitalWrite(step_pin, LOW);
+      delayMicroseconds(delay_us);
+    }
+    // increment position counter
+    position_count++;
+  } while (position_count < MAX_CLICKS);
+}
+
+void goToMin(void)
+{
+  // 720 degrees counterclockwise
+  do
+  {
+    // set direction bit LOW
+    digitalWrite(direction_pin, LOW);
+  
+    for (unsigned short i = 0; i < steps_per_click; i++)
+    {
+      digitalWrite(step_pin, HIGH);
+      delay(delay_us);
+      digitalWrite(step_pin, LOW);
+      delay(delay_us);
+    }
+    // decrement position counter
+    position_count--;
+  } while(position_count > (-MAX_CLICKS));
+}
+
+void returnToZero(void)
+{
+  if (position_count < 0)
+  {
+    // cw steps to get back to zero - set direction bit to HIGH
+    digitalWrite(direction_pin, HIGH);
+    do
+    {
+      for (unsigned short i = 0; i < steps_per_click; i++)
+      {
+        digitalWrite(step_pin, HIGH);
+        delay(delay_us);
+        digitalWrite(step_pin, LOW);
+        delay(delay_us);
+      }
+      // increment position counter
+      position_count++;
+    } while (position_count < 0);
+  }
+  else if (position_count > 0)
+  {
+    // ccw steps to get back to zero - set direction bit LOW
+    digitalWrite(direction_pin, LOW);
+    do
+    {
+      for (unsigned short i = 0; i < steps_per_click; i++)
+      {
+        digitalWrite(step_pin, HIGH);
+        delay(delay_us);
+        digitalWrite(step_pin, LOW);
+        delay(delay_us);
+      }
+      // decrement position counter
+      position_count--;
+    } while (position_count > 0);
+  }
 }
 
